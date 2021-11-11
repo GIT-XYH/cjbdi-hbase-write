@@ -39,9 +39,9 @@ public class LoadData {
             HBaseBulkLoad.bulkLoad(args);
             //构建LoadIncrementalHFiles加载HFile文件
             LoadIncrementalHFiles load = new LoadIncrementalHFiles(configuration);
-            load.doBulkLoad(new Path("hdfs://bd-01:8020/tmp/xyh_test/outHfile2"), admin, table, connection.getRegionLocator(tableName));
+            load.doBulkLoad(new Path("hdfs://bd-01:8020/tmp/xyh_test/outHfile"), admin, table, connection.getRegionLocator(tableName));
             FileSystem fs = FileSystem.get(new URI("hdfs://bd-01:8020"), configuration);
-            fs.delete(new Path("/tmp/xyh_test/outHfile2"));
+            fs.delete(new Path("/tmp/xyh_test/outHfile"));
         }
     }
 }

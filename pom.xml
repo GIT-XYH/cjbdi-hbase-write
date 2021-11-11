@@ -6,7 +6,7 @@
 
     <groupId>com.cjbdi</groupId>
     <artifactId>HBaseDemo</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>3.0-SNAPSHOT</version>
     <repositories><!-- 代码库 -->
         <repository>
             <id>maven-ali</id>
@@ -65,7 +65,7 @@
                     <archive>
                         <manifest>
 <!--                            <mainClass>ali.yunjiexi.JieXi</mainClass>-->
-                            <mainClass>com.cjbdi.version2.LoadData</mainClass>
+                            <mainClass>com.cjbdi.version1.LoadData</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

@@ -1,4 +1,4 @@
-package com.cjbdi.version2;
+package com.cjbdi.version3;
 
 
 import org.apache.hadoop.conf.Configuration;
@@ -59,7 +59,7 @@ public class HBaseBulkLoad extends Configured implements Tool {
         //数据写回到HDFS，写成HFile -> 所以指定输出格式为HFileOutputFormat2
         job.setOutputFormatClass(HFileOutputFormat2.class);
         String time = new Date().getTime() + "";
-        Path path = new Path("hdfs://bd-01:8020/tmp/xyh_test/outHfile");
+        Path path = new Path("hdfs://bd-01:8020/tmp/xyh_test/outHfile2");
         HFileOutputFormat2.setOutputPath(job, path);
 
         //开始执行
