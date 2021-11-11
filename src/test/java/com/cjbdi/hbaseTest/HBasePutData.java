@@ -33,8 +33,7 @@ public class HBasePutData {
     }
 
     //向表中添加数据(多个 rowKey, 多个列族)
-    @Test
-    public void insertData() throws Exception {
+    public static void insertData() throws Exception {
 //        Table table = conn.getTable(TableName.valueOf("test:t1"));
         Table table = conn.getTable(TableName.valueOf("ns_ws:t_ws_test"));
         ArrayList<Put> puts = new ArrayList<>();
@@ -51,5 +50,9 @@ public class HBasePutData {
 
         table.close();
         System.out.println("插入成功");
+    }
+
+    public static void main(String[] args) throws Exception {
+        HBasePutData.insertData();
     }
 }

@@ -10,13 +10,16 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Date;
 
 public class SequenceFileTest {
     //HDFS路径
@@ -68,24 +71,23 @@ public class SequenceFileTest {
         //key = (Text) ReflectionUtils.newInstance(reader.getKeyClass(), conf);
         //val = (BytesWritable) ReflectionUtils.newInstance(reader.getValueClass(), conf);
 
-       /*
        // 把sequenceFile中的内容写到hbase中
         int i = 0;
         while(reader.next(key, val)){
             String temp = key.toString();
             temp = temp.substring(temp.lastIndexOf("/") + 1);
             //rowKey 设计
-            String rowKey = temp;
-            System.out.println(rowKey);
+            String rowKey = new Date().getTime() + "";
+            System.out.println("rowKey 为: " + rowKey);
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
-            put.addColumn("picinfo".getBytes(), "content".getBytes() , val.getBytes());
+            put.addColumn("ws_xx".getBytes(), "content".getBytes() , val.getBytes());
             table.put(put);
         }
         table.close();
         org.apache.hadoop.io.IOUtils.closeStream(reader);
-        */
+
     }
 
     /****
@@ -115,5 +117,11 @@ public class SequenceFileTest {
                 listFileAndWriteToSequenceFile(fileSystem, fileStatus.getPath().toString());
             }
         }
+    }
+
+    public static void main(String[] args) throws Exception {
+        SequenceFileTest sequenceFileTest = new SequenceFileTest("/tmp/xyh_test/图片测试.png", "/tmp/xyh_test/res2");
+        sequenceFileTest.initHbase("ns_ws:t_ws_test");
+        sequenceFileTest.test();
     }
 }

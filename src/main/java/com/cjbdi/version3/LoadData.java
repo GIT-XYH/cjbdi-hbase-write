@@ -48,7 +48,6 @@ public class LoadData {
                     LoadIncrementalHFiles load = new LoadIncrementalHFiles(configuration);
                     load.doBulkLoad(new Path("hdfs://bd-01:8020/tmp/xyh_test/outHfile2"), admin, table, connection.getRegionLocator(tableName));
                     FileSystem fs = FileSystem.get(new URI("hdfs://bd-01:8020"), configuration);
-
                     fs.delete(new Path("/tmp/xyh_test/outHfile2"));
                 } catch (Exception e) {
                     e.printStackTrace();
