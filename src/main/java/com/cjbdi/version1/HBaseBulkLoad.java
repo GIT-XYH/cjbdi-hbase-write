@@ -27,11 +27,10 @@ import org.apache.hadoop.util.ToolRunner;
  * 	3 tianjin 102
  */
 public class HBaseBulkLoad extends Configured implements Tool {
-//    public static void main(String[] args) throws Exception {
     public static void LoadHfile(String[] args) throws Exception {
         Configuration configuration = HBaseConfiguration.create();
         //设置ZK集群
-        configuration.set("hbase.zookeeper.quorum", "bd-01");
+        configuration.set("hbase.zookeeper.quorum", "bd-01,bd-02,bd-03");
         configuration.set("hbase.zookeeper.property.clientPort", "2181");
         configuration.set("zookeeper.znode.parent", "/hbase-unsecure");
 
@@ -45,20 +44,20 @@ public class HBaseBulkLoad extends Configured implements Tool {
         Job job = Job.getInstance(conf);
         job.setJarByClass(HBaseBulkLoad.class);
 
-        FileInputFormat.addInputPath(job, new Path("hdfs://bd-01:8020/tmp/xyh_test/person.txt"));
+        FileInputFormat.addInputPath(job, new Path("hdfs://bd-01:8020/tmp/xyh/txt/person.txt"));
         job.setMapperClass(BulkLoadMapper.class);
         job.setMapOutputKeyClass(ImmutableBytesWritable.class);
         job.setMapOutputValueClass(Put.class);
 
         //获取数据库连接
         Connection connection = ConnectionFactory.createConnection(conf);
-        Table table = connection.getTable(TableName.valueOf("ns_ws:t_ws_test"));
+        Table table = connection.getTable(TableName.valueOf("ns_xyh:t_txt"));
 
         //使MR可以向表中，增量增加数据
-        HFileOutputFormat2.configureIncrementalLoad(job, table, connection.getRegionLocator(TableName.valueOf("ns_ws:t_ws_test")));
+        HFileOutputFormat2.configureIncrementalLoad(job, table, connection.getRegionLocator(TableName.valueOf("ns_xyh:t_txt")));
         //数据写回到HDFS，写成HFile -> 所以指定输出格式为HFileOutputFormat2
         job.setOutputFormatClass(HFileOutputFormat2.class);
-        HFileOutputFormat2.setOutputPath(job, new Path("hdfs://bd-01:8020/tmp/xyh_test/outHfile1"));
+        HFileOutputFormat2.setOutputPath(job, new Path("hdfs://bd-01:8020/tmp/xyh/txt_out"));
 
         //开始执行
         boolean b = job.waitForCompletion(true);

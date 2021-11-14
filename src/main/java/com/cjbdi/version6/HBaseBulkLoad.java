@@ -1,6 +1,7 @@
-package com.cjbdi.version2;
+package com.cjbdi.version6;
 
 
+import com.cjbdi.version3.BulkLoadMapper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -26,17 +27,13 @@ import java.util.Date;
  * @Description: 将 HDFS 上的文件生成 HFile 并存储在 hdfs 上
  */
 public class HBaseBulkLoad extends Configured implements Tool {
-//    public static void main(String[] args) throws Exception {
     public static void bulkLoad(String[] args) throws Exception {
         Configuration configuration = HBaseConfiguration.create();
         //设置ZK集群
-        //,bd-02:2181,bd-03:2181
-//        configuration.set("hbase.zookeeper.quorum", "bd-01:2181,bd-02:2181,bd-03:2181");
-        configuration.set("hbase.zookeeper.quorum", "bd-01,bd-02,bd-03");
+        configuration.set("hbase.zookeeper.quorum", "bd-01.bd-02,bd-03");
         configuration.set("hbase.zookeeper.property.clientPort", "2181");
         configuration.set("zookeeper.znode.parent", "/hbase-unsecure");
         ToolRunner.run(configuration, new HBaseBulkLoad(), args);
-//        System.exit(run);
 //    }
     }
     @Override
@@ -58,6 +55,7 @@ public class HBaseBulkLoad extends Configured implements Tool {
         HFileOutputFormat2.configureIncrementalLoad(job, table, connection.getRegionLocator(TableName.valueOf("ns_xyh:t_doc")));
         //数据写回到HDFS，写成HFile -> 所以指定输出格式为HFileOutputFormat2
         job.setOutputFormatClass(HFileOutputFormat2.class);
+        String time = new Date().getTime() + "";
         Path path = new Path("hdfs://bd-01:8020/tmp/xyh/doc_out");
         HFileOutputFormat2.setOutputPath(job, path);
 

@@ -19,15 +19,13 @@ import java.util.Date;
  */
 public class BulkLoadMapper extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put>{
 
+    protected final String CF_KQ = "doc_content";            //列族名称
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        String row = new Date().getTime() + "-";
-        //封装输出的rowkey类型
-        ImmutableBytesWritable rowkey = new ImmutableBytesWritable(Bytes.toBytes(row));
-
-//        Put put = new Put(value.getBytes() );
-        Put put = new Put(Bytes.toBytes(row));
-        put.addColumn("ws_xx".getBytes(), "binary_ws".getBytes(), value.getBytes());
-        context.write(rowkey, put);
+        String skey = "abcdefg123456789";
+        Put put = new Put(Bytes.toBytes(skey));
+        ImmutableBytesWritable rowkey = new ImmutableBytesWritable(Bytes.toBytes(skey));        //行健
+        put.addColumn(Bytes.toBytes(CF_KQ), Bytes.toBytes("mesgRaw"), value.getBytes());
+        context.write(rowkey, put);  //利用context进行写
     }
 }

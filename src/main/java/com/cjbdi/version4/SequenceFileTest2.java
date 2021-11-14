@@ -20,12 +20,15 @@ import org.apache.hadoop.io.Text;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * @Author: XYH
  * @Date: 2021/11/11 5:42 上午
  * @Description: 递归文件, 将文件生成 sequenceFile, 并将 sequenceFile 加载到 hbase 中
  */
-public class SequenceFileTest {
+public class SequenceFileTest2 {
     //HDFS路径
     String inpath = null;
     String outpath = null;
@@ -36,7 +39,7 @@ public class SequenceFileTest {
 
     //"/fayson/picHbase";
     //"/fayson/out";
-    SequenceFileTest(String inpath, String outpath) {
+    SequenceFileTest2(String inpath, String outpath) {
         this.inpath = inpath;
         this.outpath = outpath;
     }
@@ -44,7 +47,7 @@ public class SequenceFileTest {
     //"picHbase"
     public void initHbase(String tableName) throws IOException {
         hbaseConf = HBaseConfiguration.create();
-        hbaseConf.set("hbase.zookeeper.quorum", "bd-01");
+        hbaseConf.set("hbase.zookeeper.quorum", "bd-01,bd-02,bd-03");
         hbaseConf.set("hbase.zookeeper.property.clientPort", "2181");
         hbaseConf.set("zookeeper.znode.parent", "/hbase-unsecure");
         hbaseConf.set("hbase.client.keyvalue.maxsize","102400000");
@@ -83,18 +86,18 @@ public class SequenceFileTest {
             temp = temp.substring(temp.lastIndexOf("/") + 1);
             //rowKey 设计
             String rowKey = new Date().getTime() + "";
-            System.out.println("rowKey 为: " + rowKey);
+//            System.out.println("rowKey 为: " + rowKey);
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
-            put.addColumn("pic_content".getBytes(), "content".getBytes() , val.getBytes());
+            put.addColumn("doc_content".getBytes(), "content".getBytes() , val.getBytes());
             table.put(put);
         }
         table.close();
         org.apache.hadoop.io.IOUtils.closeStream(reader);
         try {
             FileSystem fs = FileSystem.get(new URI("hdfs://bd-01:8020"), conf);
-            fs.delete(new Path("/tmp/xyh/pic_out"));
+            fs.delete(new Path("/tmp/xyh/doc_out"));
             fs.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -126,11 +129,10 @@ public class SequenceFileTest {
     }
 
     public static void main(String[] args) throws Exception {
-        long startTime = System.currentTimeMillis();
-        SequenceFileTest sequenceFileTest = new SequenceFileTest("/tmp/xyh/pic", "/tmp/xyh/pic_out");
-        sequenceFileTest.initHbase("ns_xyh:t_pic");
-        sequenceFileTest.test();
-        long endTime = System.currentTimeMillis();
-        System.out.println("数据入库共耗时: " + (endTime-startTime) + "毫秒");
+        while(true) {
+            SequenceFileTest2 sequenceFileTest = new SequenceFileTest2("/tmp/xyh/doc", "/tmp/xyh/doc_out");
+            sequenceFileTest.initHbase("ns_xyh:t_doc");
+            sequenceFileTest.test();
+        }
     }
 }

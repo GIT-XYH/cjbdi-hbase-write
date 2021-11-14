@@ -1,4 +1,4 @@
-package com.cjbdi.version2;
+package com.cjbdi.myversion;
 
 
 import org.apache.hadoop.conf.Configuration;
@@ -25,40 +25,39 @@ import java.util.Date;
  * @Date: 2021/11/8 10:13 上午
  * @Description: 将 HDFS 上的文件生成 HFile 并存储在 hdfs 上
  */
-public class HBaseBulkLoad extends Configured implements Tool {
-//    public static void main(String[] args) throws Exception {
+public class MyHBaseBulkLoad extends Configured implements Tool {
     public static void bulkLoad(String[] args) throws Exception {
         Configuration configuration = HBaseConfiguration.create();
         //设置ZK集群
-        //,bd-02:2181,bd-03:2181
-//        configuration.set("hbase.zookeeper.quorum", "bd-01:2181,bd-02:2181,bd-03:2181");
-        configuration.set("hbase.zookeeper.quorum", "bd-01,bd-02,bd-03");
+        configuration.set("hbase.zookeeper.quorum", "rookiex01,rookiex02,rookiex03");
         configuration.set("hbase.zookeeper.property.clientPort", "2181");
-        configuration.set("zookeeper.znode.parent", "/hbase-unsecure");
-        ToolRunner.run(configuration, new HBaseBulkLoad(), args);
-//        System.exit(run);
+//        configuration.set("zookeeper.znode.parent", "/hbase-unsecure");
+        ToolRunner.run(configuration, new MyHBaseBulkLoad(), args);
 //    }
     }
     @Override
     public int run(String[] strings) throws Exception {
         Configuration conf = super.getConf();
         Job job = Job.getInstance(conf);
-        job.setJarByClass(HBaseBulkLoad.class);
+        job.setJarByClass(MyHBaseBulkLoad.class);
 
-        FileInputFormat.addInputPath(job, new Path("hdfs://bd-01:8020/tmp/xyh/doc/50M测试文件.doc"));
-        job.setMapperClass(BulkLoadMapper.class);
+//        FileInputFormat.addInputPath(job, new Path("hdfs://rookiex01:8020/xyh/pic/pic1.jpeg"));
+        FileInputFormat.addInputPath(job, new Path("hdfs://rookiex01:8020/xyh/pic_out"));
+        job.setMapperClass(MyBulkLoadMapper.class);
         job.setMapOutputKeyClass(ImmutableBytesWritable.class);
         job.setMapOutputValueClass(Put.class);
 
         //获取数据库连接
         Connection connection = ConnectionFactory.createConnection(conf);
-        Table table = connection.getTable(TableName.valueOf("ns_xyh:t_doc"));
+        Table table = connection.getTable(TableName.valueOf("ns_ws:t_ws_test"));
 
         //使MR可以向表中，增量增加数据
-        HFileOutputFormat2.configureIncrementalLoad(job, table, connection.getRegionLocator(TableName.valueOf("ns_xyh:t_doc")));
+        HFileOutputFormat2.configureIncrementalLoad(job, table, connection.getRegionLocator(TableName.valueOf("ns_ws:t_ws_test")));
         //数据写回到HDFS，写成HFile -> 所以指定输出格式为HFileOutputFormat2
         job.setOutputFormatClass(HFileOutputFormat2.class);
-        Path path = new Path("hdfs://bd-01:8020/tmp/xyh/doc_out");
+        String time = new Date().getTime() + "";
+//        Path path = new Path("hdfs://rookiex01:8020/xyh/pic_out");
+        Path path = new Path("hdfs://rookiex01:8020/xyh/pic_outhfile");
         HFileOutputFormat2.setOutputPath(job, path);
 
         //开始执行

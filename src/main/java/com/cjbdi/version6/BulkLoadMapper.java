@@ -1,4 +1,4 @@
-package com.cjbdi.version3;
+package com.cjbdi.version6;
 
 
 import org.apache.hadoop.hbase.client.Put;

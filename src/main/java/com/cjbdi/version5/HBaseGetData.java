@@ -1,9 +1,11 @@
-package com.cjbdi.hbaseTest;
+package com.cjbdi.version5;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -20,6 +22,8 @@ public class HBaseGetData {
         conf.set("hbase.zookeeper.quorum", "bd-01,bd-02,bd-03");
 //        conf.set("hbase.zookeeper.quorum", "bd-01");
         conf.set("hbase.zookeeper.property.client", "2181");
+        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
+
         try{
             conn = ConnectionFactory.createConnection(conf);
         }catch (Exception e){
