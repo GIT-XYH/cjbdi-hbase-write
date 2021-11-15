@@ -86,7 +86,7 @@ public class SequenceFileTest2 {
             temp = temp.substring(temp.lastIndexOf("/") + 1);
             //rowKey 设计
             String rowKey = new Date().getTime() + "";
-//            System.out.println("rowKey 为: " + rowKey);
+            System.out.println("rowKey 为: " + rowKey);
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
@@ -129,7 +129,8 @@ public class SequenceFileTest2 {
     }
 
     public static void main(String[] args) throws Exception {
-        while(true) {
+        long startTime = System.currentTimeMillis();
+        while(System.currentTimeMillis()<startTime+7200000) {
             SequenceFileTest2 sequenceFileTest = new SequenceFileTest2("/tmp/xyh/doc", "/tmp/xyh/doc_out");
             sequenceFileTest.initHbase("ns_xyh:t_doc");
             sequenceFileTest.test();

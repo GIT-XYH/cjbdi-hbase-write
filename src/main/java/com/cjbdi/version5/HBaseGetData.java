@@ -8,6 +8,9 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.File;
+import java.io.FileOutputStream;
+
 /**
  * @Author: XYH
  * @Date: 2021/11/11 11:24 上午
@@ -34,14 +37,23 @@ public class HBaseGetData {
         Table table = conn.getTable(tableName);
         //获得一行
         Get get = new Get(Bytes.toBytes(rowKey));
-        Result set = table.get(get);
-        Cell[] cells = set.rawCells();
-        for (Cell cell: cells){
-            System.out.println(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()) + "::" +
-                    Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength()));
-        }
-        System.out.println("----------------****************_____________________");
+        Result rs = table.get(get);
+        //保存 get result 的结果, 字节数组的形式
+        byte[] bs = rs.value();
         table.close();
+        File file = new File("/data/xyh/xxxx.doc");
+        FileOutputStream fos = new FileOutputStream(file);
+        fos.write(bs);
+        fos.close();
+//        Result set = table.get(get);
+//        Cell[] cells = set.rawCells();
+//        for (Cell cell: cells){
+//            System.out.println(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()) + "::" +
+//                    Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength()));
+//        }
+//        System.out.println("----------------****************_____________________");
+//        table.close();
+
     }
 
 
@@ -69,9 +81,8 @@ public class HBaseGetData {
         }
     }
 public static void main(String[] args) throws Exception {
-//    HBaseGetData.getResult(TableName.valueOf("test:t1"), "rk002");
-//    HBaseGetData.scanTable(TableName.valueOf("test:t1"));
-    HBaseGetData.scanTable(TableName.valueOf("ns_xyh:t_doc"));
+    HBaseGetData.getResult(TableName.valueOf("ns_xyh:t_doc"), "1636959595958");
+//    HBaseGetData.scanTable(TableName.valueOf("ns_xyh:t_doc"));
 }
 
 }

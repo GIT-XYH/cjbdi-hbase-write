@@ -23,6 +23,8 @@ import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static java.lang.Thread.sleep;
+
 /**
  * @Author: XYH
  * @Date: 2021/11/11 5:42 上午
@@ -47,7 +49,7 @@ public class SequenceFileTest3 {
     //"picHbase"
     public void initHbase(String tableName) throws IOException {
         hbaseConf = HBaseConfiguration.create();
-        hbaseConf.set("hbase.zookeeper.quorum", "bd-01,bd-02,bd-03");
+        hbaseConf.set("hbase.zookeeper.quorum", "bd-01");
         hbaseConf.set("hbase.zookeeper.property.clientPort", "2181");
         hbaseConf.set("zookeeper.znode.parent", "/hbase-unsecure");
         hbaseConf.set("hbase.client.keyvalue.maxsize","102400000");
@@ -59,7 +61,6 @@ public class SequenceFileTest3 {
         URI uri = new URI(inpath);
         Configuration conf = new Configuration();
         FileSystem fileSystem = FileSystem.get(uri, conf,"hdfs");
-        long length = fileSystem.getContentSummary(new Path("hdfs://bd-01:8020/tmp/xyh/doc")).getLength();
         //实例化writer对象
         writer = SequenceFile.createWriter(fileSystem, conf, new Path(outpath), Text.class, BytesWritable.class);
 
@@ -131,11 +132,9 @@ public class SequenceFileTest3 {
 
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-
         //连续存储两个小时
-        while(System.currentTimeMillis()<startTime+7200000) {
             ExecutorService service = Executors.newFixedThreadPool(10);
-            Runnable runnable = new Runnable() {
+            Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {
@@ -149,8 +148,12 @@ public class SequenceFileTest3 {
                         e.printStackTrace();
                     }
                 }
-            };
-            service.execute(runnable);
+            });
+        while(System.currentTimeMillis()<startTime+7200000) {
+
+            service.execute(thread);
+            sleep(10000);
         }
+        service.shutdown();
     }
-}
+    }

@@ -6,7 +6,7 @@
 
     <groupId>com.cjbdi</groupId>
     <artifactId>HBaseDemo</artifactId>
-    <version>version4</version>
+    <version>version5</version>
     <repositories><!-- 代码库 -->
         <repository>
             <id>maven-ali</id>
@@ -79,7 +79,7 @@
                     <archive>
                         <manifest>
 <!--                            <mainClass>ali.yunjiexi.JieXi</mainClass>-->
-                            <mainClass>com.cjbdi.myversion.MySequenceFileToText</mainClass>
+                            <mainClass>com.cjbdi.version5.HBasePutData</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
