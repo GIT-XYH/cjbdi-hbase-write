@@ -48,9 +48,10 @@ public class SequenceFileTestWithThread {
     //HBase 环境
     public void initHbase(String tableName) throws IOException {
         hbaseConf = HBaseConfiguration.create();
-        hbaseConf.set("hbase.zookeeper.quorum", "bd-01");
+//        hbaseConf.set("hbase.zookeeper.quorum", "bd-01");
+        hbaseConf.set("hbase.zookeeper.quorum", "rookiex01");
         hbaseConf.set("hbase.zookeeper.property.clientPort", "2181");
-        hbaseConf.set("zookeeper.znode.parent", "/hbase-unsecure");
+//        hbaseConf.set("zookeeper.znode.parent", "/hbase-unsecure");
         hbaseConf.set("hbase.client.keyvalue.maxsize","102400000");
         conn = ConnectionFactory.createConnection(hbaseConf);
         table = (Table) conn.getTable(TableName.valueOf(tableName));
@@ -58,7 +59,7 @@ public class SequenceFileTestWithThread {
 
     public void test() throws Exception {
         URI uri = new URI(inpath);
-        FileSystem fileSystem = FileSystem.get(uri, conf,"hdfs");
+        FileSystem fileSystem = FileSystem.get(uri, conf,"root");
         //实例化writer对象
         writer = SequenceFile.createWriter(fileSystem, conf, new Path(outpath), Text.class, BytesWritable.class);
         //递归遍历文件夹，并将文件下的文件写入sequenceFile文件
@@ -83,7 +84,8 @@ public class SequenceFileTestWithThread {
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
-            put.addColumn("doc_content".getBytes(), "doc".getBytes() , val.getBytes());
+//            put.addColumn("doc_content".getBytes(), "doc".getBytes() , val.getBytes());
+            put.addColumn("ws_xx".getBytes(), "doc".getBytes() , val.getBytes());
             table.put(put);
         }
         table.close();
@@ -122,9 +124,11 @@ public class SequenceFileTestWithThread {
 
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        SequenceFileTestWithThread sequenceFileTest = new SequenceFileTestWithThread("/tmp/xyh/doc", "/tmp/xyh/doc_out/" + new Date().getTime());
-        sequenceFileTest.initHbase("ns_xyh:t_doc");
-        ExecutorService service = Executors.newFixedThreadPool(6);
+//        SequenceFileTestWithThread sequenceFileTest = new SequenceFileTestWithThread("/tmp/xyh/doc", "/tmp/xyh/doc_out/");
+        SequenceFileTestWithThread sequenceFileTest = new SequenceFileTestWithThread("/xyh/pic", "/tmp/xyh/pic_out/");
+//        sequenceFileTest.initHbase("ns_xyh:t_doc");
+        sequenceFileTest.initHbase("ns_ws:t_ws_test");
+        ExecutorService service = Executors.newFixedThreadPool(2);
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
