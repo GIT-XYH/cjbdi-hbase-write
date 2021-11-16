@@ -1,4 +1,4 @@
-package com.cjbdi.version4;
+package com.cjbdi.finalVersion;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -23,12 +23,14 @@ import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static java.lang.Thread.sleep;
+
 /**
  * @Author: XYH
- * @Date: 2021/11/11 5:42 上午
- * @Description: 递归文件, 将文件生成 sequenceFile, 并将 sequenceFile 加载到 hbase 中
+ * @Date: 2021/11/16 5:42 下午
+ * @Description: 利用多线程连续两小时将文件生成 sequenceFile, 并将 sequenceFile 加载到 hbase 中
  */
-public class MySequenceFileTest3 {
+public class SequenceFileTestWithThread {
     //HDFS路径
     String inpath = null;
     String outpath = null;
@@ -37,20 +39,18 @@ public class MySequenceFileTest3 {
     Configuration hbaseConf = null;
     Connection conn = null;
 
-    //"/fayson/picHbase";
-    //"/fayson/out";
-    MySequenceFileTest3(String inpath, String outpath) {
+    SequenceFileTestWithThread(String inpath, String outpath) {
         this.inpath = inpath;
         this.outpath = outpath;
     }
 
-    //"picHbase"
+    //初始化 HBase
     public void initHbase(String tableName) throws IOException {
         hbaseConf = HBaseConfiguration.create();
-        hbaseConf.set("hbase.zookeeper.quorum", "rookiex01,rookiex02,rookiex03");
+        hbaseConf.set("hbase.zookeeper.quorum", "bd-01");
         hbaseConf.set("hbase.zookeeper.property.clientPort", "2181");
-//        hbaseConf.set("zookeeper.znode.parent", "/hbase-unsecure");
-        hbaseConf.set("hbase.client.keyvalue.maxsize","52428800");
+        hbaseConf.set("zookeeper.znode.parent", "/hbase-unsecure");
+        hbaseConf.set("hbase.client.keyvalue.maxsize","102400000");
         conn = ConnectionFactory.createConnection(hbaseConf);
         table = (Table) conn.getTable(TableName.valueOf(tableName));
     }
@@ -58,8 +58,7 @@ public class MySequenceFileTest3 {
     public void test() throws Exception {
         URI uri = new URI(inpath);
         Configuration conf = new Configuration();
-        FileSystem fileSystem = FileSystem.get(uri, conf,"root");
-        long length = fileSystem.getContentSummary(new Path("hdfs://rookiex01:8020/xyh/pic")).getLength();
+        FileSystem fileSystem = FileSystem.get(uri, conf,"hdfs");
         //实例化writer对象
         writer = SequenceFile.createWriter(fileSystem, conf, new Path(outpath), Text.class, BytesWritable.class);
 
@@ -92,14 +91,14 @@ public class MySequenceFileTest3 {
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
-            put.addColumn("ws_xx".getBytes(), "content".getBytes() , val.getBytes());
+            put.addColumn("doc_content".getBytes(), "content".getBytes() , val.getBytes());
             table.put(put);
         }
         table.close();
         org.apache.hadoop.io.IOUtils.closeStream(reader);
         try {
-            FileSystem fs = FileSystem.get(new URI("hdfs://rookiex01:8020"), conf);
-            fs.delete(new Path("/xyh/pic_out"));
+            FileSystem fs = FileSystem.get(new URI("hdfs://bd-01:8020"), conf);
+            fs.delete(new Path("/tmp/xyh/doc_out"));
             fs.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -131,24 +130,27 @@ public class MySequenceFileTest3 {
 
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-//        while(System.currentTimeMillis()<startTime+7200000) {
-//            ExecutorService service = Executors.newCachedThreadPool();
-//            Runnable runnable = new Runnable() {
-//                @Override
-//                public void run() {
-//                    try {
-                         MySequenceFileTest3 sequenceFileTest = new MySequenceFileTest3("/xyh/pic", "/xyh/pic_out");
-                         sequenceFileTest.initHbase("ns_ws:t_ws_test");
-                          sequenceFileTest.test();
-//            System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            };
-//            service.execute(runnable);
-//        }
-        long endTime = System.currentTimeMillis();
-        System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
+        SequenceFileTestWithThread sequenceFileTest = new SequenceFileTestWithThread("/tmp/xyh/doc", "/tmp/xyh/doc_out/");
+        sequenceFileTest.initHbase("ns_xyh:t_doc");
+        ExecutorService service = Executors.newFixedThreadPool(6);
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    sequenceFileTest.test();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+    //连续存储两个小时
+    while(System.currentTimeMillis()<startTime+7200000) {
+        service.execute(thread);
+        sleep(10000);
+    }
+    long endTime = System.currentTimeMillis();
+    System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
+    service.shutdown();
     }
 }

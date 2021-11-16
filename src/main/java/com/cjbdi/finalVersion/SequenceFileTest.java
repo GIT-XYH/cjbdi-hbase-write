@@ -1,4 +1,4 @@
-package com.cjbdi.version4;
+package com.cjbdi.finalVersion;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -20,17 +20,13 @@ import org.apache.hadoop.io.Text;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import static java.lang.Thread.sleep;
 
 /**
  * @Author: XYH
  * @Date: 2021/11/11 5:42 上午
- * @Description: 递归文件, 将文件生成 sequenceFile, 并将 sequenceFile 加载到 hbase 中
+ * @Description: 连续两小时将文件生成 sequenceFile, 并将 sequenceFile 加载到 hbase 中
  */
-public class SequenceFileTest3 {
+public class SequenceFileTest {
     //HDFS路径
     String inpath = null;
     String outpath = null;
@@ -39,9 +35,7 @@ public class SequenceFileTest3 {
     Configuration hbaseConf = null;
     Connection conn = null;
 
-    //"/fayson/picHbase";
-    //"/fayson/out";
-    SequenceFileTest3(String inpath, String outpath) {
+    SequenceFileTest(String inpath, String outpath) {
         this.inpath = inpath;
         this.outpath = outpath;
     }
@@ -49,7 +43,7 @@ public class SequenceFileTest3 {
     //"picHbase"
     public void initHbase(String tableName) throws IOException {
         hbaseConf = HBaseConfiguration.create();
-        hbaseConf.set("hbase.zookeeper.quorum", "bd-01");
+        hbaseConf.set("hbase.zookeeper.quorum", "bd-01,bd-02,bd-03");
         hbaseConf.set("hbase.zookeeper.property.clientPort", "2181");
         hbaseConf.set("zookeeper.znode.parent", "/hbase-unsecure");
         hbaseConf.set("hbase.client.keyvalue.maxsize","102400000");
@@ -63,7 +57,6 @@ public class SequenceFileTest3 {
         FileSystem fileSystem = FileSystem.get(uri, conf,"hdfs");
         //实例化writer对象
         writer = SequenceFile.createWriter(fileSystem, conf, new Path(outpath), Text.class, BytesWritable.class);
-
 
         //递归遍历文件夹，并将文件下的文件写入sequenceFile文件
         listFileAndWriteToSequenceFile(fileSystem,inpath);
@@ -93,18 +86,18 @@ public class SequenceFileTest3 {
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
-            put.addColumn("doc_content".getBytes(), "content".getBytes() , val.getBytes());
+            put.addColumn("doc_content".getBytes(), "doc".getBytes() , val.getBytes());
             table.put(put);
         }
         table.close();
         org.apache.hadoop.io.IOUtils.closeStream(reader);
-        try {
-            FileSystem fs = FileSystem.get(new URI("hdfs://bd-01:8020"), conf);
-            fs.delete(new Path("/tmp/xyh/doc_out"));
-            fs.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            FileSystem fs = FileSystem.get(new URI("hdfs://bd-01:8020"), conf);
+//            fs.delete(new Path("/tmp/xyh/doc_out"));
+//            fs.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     //递归文件, 将文件写成 sequenceFile
@@ -113,13 +106,12 @@ public class SequenceFileTest3 {
         for (FileStatus fileStatus : listStatuses) {
             if(fileStatus.isFile()){
                 Text fileText = new Text(fileStatus.getPath().toString());
-                System.out.println(fileText.toString());
+//                System.out.println(fileText.toString());
                 //返回一个SequenceFile.Writer实例 需要数据流和path对象 将数据写入了path对象
                 FSDataInputStream in = fileSystem.open(new Path(fileText.toString()));
                 byte[] buffer = IOUtils.toByteArray(in);
                 in.read(buffer);
                 BytesWritable value = new BytesWritable(buffer);
-
                 //写成SequenceFile文件
                 //文件名, 二进制内容
                 writer.append(fileText, value);
@@ -132,28 +124,12 @@ public class SequenceFileTest3 {
 
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        //连续存储两个小时
-            ExecutorService service = Executors.newFixedThreadPool(10);
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        //            long startTime = System.currentTimeMillis();
-                        SequenceFileTest3 sequenceFileTest = new SequenceFileTest3("/tmp/xyh/doc", "/tmp/xyh/doc_out");
-                        sequenceFileTest.initHbase("ns_xyh:t_doc");
-                        sequenceFileTest.test();
-//            long endTime = System.currentTimeMillis();
-//            System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+        SequenceFileTest sequenceFileTest = new SequenceFileTest("/tmp/xyh/doc", "/tmp/xyh/doc_out" + new Date().getTime());
+        sequenceFileTest.initHbase("ns_xyh:t_doc");
         while(System.currentTimeMillis()<startTime+7200000) {
-
-            service.execute(thread);
-            sleep(10000);
+            sequenceFileTest.test();
         }
-        service.shutdown();
+        long endTime = System.currentTimeMillis();
+        System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
     }
-    }
+}

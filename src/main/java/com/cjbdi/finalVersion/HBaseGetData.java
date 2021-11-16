@@ -1,4 +1,4 @@
-package com.cjbdi.version5;
+package com.cjbdi.finalVersion;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
@@ -14,7 +14,7 @@ import java.io.FileOutputStream;
 /**
  * @Author: XYH
  * @Date: 2021/11/11 11:24 上午
- * @Description: 从 HBase 中 get 数据, 根据 rowkey 查询数据
+ * @Description: 根据 rowkey 查询数据从 HBase 中 get 数据并保存到 Linux 本地目录
  */
 public class HBaseGetData {
 
@@ -22,7 +22,7 @@ public class HBaseGetData {
     static Connection conn = null;
     static {
         conf = HBaseConfiguration.create();
-        conf.set("hbase.zookeeper.quorum", "bd-01,bd-02,bd-03");
+        conf.set("hbase.zookeeper.quorum", "bd-01");
 //        conf.set("hbase.zookeeper.quorum", "bd-01");
         conf.set("hbase.zookeeper.property.client", "2181");
         conf.set("zookeeper.znode.parent", "/hbase-unsecure");
@@ -41,7 +41,7 @@ public class HBaseGetData {
         //保存 get result 的结果, 字节数组的形式
         byte[] bs = rs.value();
         table.close();
-        File file = new File("/data/xyh/xxxx.doc");
+        File file = new File("/data/xyh/xxx.doc");
         FileOutputStream fos = new FileOutputStream(file);
         fos.write(bs);
         fos.close();
@@ -57,6 +57,7 @@ public class HBaseGetData {
     }
 
 
+    //扫描全表
     public static void scanTable(TableName tableName) throws Exception{
         Table table = conn.getTable(tableName);
         Scan scan = new Scan();
@@ -80,9 +81,12 @@ public class HBaseGetData {
             }
         }
     }
-public static void main(String[] args) throws Exception {
-    HBaseGetData.getResult(TableName.valueOf("ns_xyh:t_doc"), "1636959595958");
-//    HBaseGetData.scanTable(TableName.valueOf("ns_xyh:t_doc"));
-}
+    public static void main(String[] args) throws Exception {
+        long startTime = System.currentTimeMillis();
+        HBaseGetData.getResult(TableName.valueOf("ns_xyh:t_doc"), "1637056927698");
+    //    HBaseGetData.scanTable(TableName.valueOf("ns_xyh:t_doc"));
+        long endTime = System.currentTimeMillis();
+        System.out.println("HBase get 数据共耗时: " + (endTime-startTime));
+    }
 
 }

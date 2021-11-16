@@ -1,8 +1,9 @@
-package com.cjbdi.hdfsTest;
+package com.cjbdi.version5;
 
-import java.net.URI;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+
+import java.net.URI;
 
 /**
  * @Author: XYH
@@ -10,7 +11,7 @@ import org.apache.hadoop.fs.FileSystem;
  * @Description: 获取 HDFS的客户端对象
  */
 
-public class HDFSUtils {
+public class HDFSDUtils {
     public static FileSystem  getFs() throws Exception {
         URI uri = new URI("hdfs://bd-01:8020/");
         Configuration conf = new Configuration();

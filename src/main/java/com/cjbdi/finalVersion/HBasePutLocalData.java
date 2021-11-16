@@ -1,34 +1,25 @@
-package com.cjbdi.version5;
+package com.cjbdi.finalVersion;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Date;
+import java.io.FileInputStream;
 
 /**
  * @Author: XYH
  * @Date: 2021/11/11 10:42 上午
- * @Description: 想 HBase 表中 put 数据
+ * @Description: 从 Linux 本地向 HBase 表中 put 数据
  */
-public class HBasePutData {
+public class HBasePutLocalData {
     static Configuration conf = null;
     static Connection conn = null;
     static {
         conf = HBaseConfiguration.create();
-//        conf.set("hbase.zookeeper.quorum", "rookiex01,rookiex02,rookiex03");
         conf.set("hbase.zookeeper.quorum", "bd-01");
         conf.set("hbase.zookeeper.property.client", "2181");
         conf.set("zookeeper.znode.parent", "/hbase-unsecure");
@@ -42,11 +33,22 @@ public class HBasePutData {
 
     //向表中添加数据(多个 rowKey, 多个列族)
     public static void insertData() throws Exception {
-//        Table table = conn.getTable(TableName.valueOf("test:t1"));
-        Table table = conn.getTable(TableName.valueOf("ns_ws:t_ws_test"));
-        ArrayList<Put> puts = new ArrayList<>();
-        Configuration conf = new Configuration();
-
+        //获取需要添加数据的表
+        Table table = conn.getTable(TableName.valueOf("ns_xyh:t_doc"));
+        //指定本地添加路径
+        String path = "/data/xyh/doc/50M测试文件1.doc";
+        FileInputStream fis = new FileInputStream(path);
+        //读图为流, 但是字节数组还是空
+        byte[] bbb = new byte[fis.available()];
+        //将文件内容写入字节数组
+        fis.read(bbb);
+        fis.close();
+        //002是 rowKey
+        Put put = new Put("002".getBytes());
+        //pic_content 是列族, img 是列, bbb 是插入的值(图片转换为字节数组)
+        put.addColumn("doc_content".getBytes(),"doc".getBytes(),bbb);
+        table.put(put);
+        table.close();
 //        //rowKey 设计
 //        String rowKey = new Date().getTime() + "";
 //        System.out.println("rowKey 为: " + rowKey);
@@ -66,6 +68,9 @@ public class HBasePutData {
     }
 
     public static void main(String[] args) throws Exception {
-        HBasePutData.insertData();
+        long startTime = System.currentTimeMillis();
+        HBasePutLocalData.insertData();
+        long endTime = System.currentTimeMillis();
+        System.out.println("HBase get 数据共耗时: " + (endTime-startTime));
     }
 }

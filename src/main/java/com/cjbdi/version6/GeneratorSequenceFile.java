@@ -1,6 +1,5 @@
 package com.cjbdi.version6;
 
-import com.cjbdi.version4.SequenceFileTest3;
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
