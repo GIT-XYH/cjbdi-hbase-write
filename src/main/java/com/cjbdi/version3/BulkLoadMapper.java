@@ -22,7 +22,7 @@ public class BulkLoadMapper extends Mapper<LongWritable, Text, ImmutableBytesWri
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         String row = new Date().getTime() + "";
-        System.out.println(row);
+        System.out.println("rowkey 为: " + row);
         //封装输出的rowkey类型
         ImmutableBytesWritable rowkey = new ImmutableBytesWritable(Bytes.toBytes(row));
 

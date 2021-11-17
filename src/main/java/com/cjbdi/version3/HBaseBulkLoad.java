@@ -1,8 +1,10 @@
 package com.cjbdi.version3;
 
 
+import com.cjbdi.version5.HDSFTraversing;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
@@ -17,6 +19,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Date;
 
 
@@ -29,7 +33,7 @@ public class HBaseBulkLoad extends Configured implements Tool {
     public static void bulkLoad(String[] args) throws Exception {
         Configuration configuration = HBaseConfiguration.create();
         //设置ZK集群
-        configuration.set("hbase.zookeeper.quorum", "bd-01.bd-02,bd-03");
+        configuration.set("hbase.zookeeper.quorum", "bd-01");
         configuration.set("hbase.zookeeper.property.clientPort", "2181");
         configuration.set("zookeeper.znode.parent", "/hbase-unsecure");
         ToolRunner.run(configuration, new HBaseBulkLoad(), args);
@@ -41,7 +45,11 @@ public class HBaseBulkLoad extends Configured implements Tool {
         Job job = Job.getInstance(conf);
         job.setJarByClass(HBaseBulkLoad.class);
 
-        FileInputFormat.addInputPath(job, new Path("hdfs://bd-01:8020/tmp/xyh/doc/50M测试文件.doc"));
+        ArrayList<String> path2 = HDSFTraversing.getPath();
+        for (String s : path2) {
+            FileSystem fs = FileSystem.get(new URI(s), conf);
+            FileInputFormat.addInputPath(job, new Path(s));
+        }
         job.setMapperClass(BulkLoadMapper.class);
         job.setMapOutputKeyClass(ImmutableBytesWritable.class);
         job.setMapOutputValueClass(Put.class);
@@ -54,8 +62,7 @@ public class HBaseBulkLoad extends Configured implements Tool {
         HFileOutputFormat2.configureIncrementalLoad(job, table, connection.getRegionLocator(TableName.valueOf("ns_xyh:t_doc")));
         //数据写回到HDFS，写成HFile -> 所以指定输出格式为HFileOutputFormat2
         job.setOutputFormatClass(HFileOutputFormat2.class);
-        String time = new Date().getTime() + "";
-        Path path = new Path("hdfs://bd-01:8020/tmp/xyh/doc_out");
+        Path path = new Path("hdfs://bd-01:8020/tmp/xyh/doc_out4");
         HFileOutputFormat2.setOutputPath(job, path);
 
         //开始执行

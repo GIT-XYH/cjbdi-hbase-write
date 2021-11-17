@@ -38,16 +38,18 @@ public class SequenceFileTestWithThread {
     Table table = null;
     Configuration hbaseConf = null;
     Connection conn = null;
+    Configuration conf = new Configuration();
 
     SequenceFileTestWithThread(String inpath, String outpath) {
         this.inpath = inpath;
         this.outpath = outpath;
     }
 
-    //初始化 HBase
+    //HBase 环境
     public void initHbase(String tableName) throws IOException {
         hbaseConf = HBaseConfiguration.create();
         hbaseConf.set("hbase.zookeeper.quorum", "bd-01");
+//        hbaseConf.set("hbase.zookeeper.quorum", "rookiex01");
         hbaseConf.set("hbase.zookeeper.property.clientPort", "2181");
         hbaseConf.set("zookeeper.znode.parent", "/hbase-unsecure");
         hbaseConf.set("hbase.client.keyvalue.maxsize","102400000");
@@ -57,31 +59,22 @@ public class SequenceFileTestWithThread {
 
     public void test() throws Exception {
         URI uri = new URI(inpath);
-        Configuration conf = new Configuration();
-        FileSystem fileSystem = FileSystem.get(uri, conf,"hdfs");
+        FileSystem fileSystem = FileSystem.get(uri, conf,"root");
         //实例化writer对象
         writer = SequenceFile.createWriter(fileSystem, conf, new Path(outpath), Text.class, BytesWritable.class);
-
-
         //递归遍历文件夹，并将文件下的文件写入sequenceFile文件
         listFileAndWriteToSequenceFile(fileSystem,inpath);
-
         //关闭流
         org.apache.hadoop.io.IOUtils.closeStream(writer);
-
         //读取所有文件
         URI seqURI = new URI(outpath);
         FileSystem fileSystemSeq = FileSystem.get(seqURI, conf);
         SequenceFile.Reader reader = new SequenceFile.Reader(fileSystemSeq, new Path(outpath), conf);
-
         // Sequence File的键值对
         Text key = new Text();
         BytesWritable val = new BytesWritable();
-        //key = (Text) ReflectionUtils.newInstance(reader.getKeyClass(), conf);
-        //val = (BytesWritable) ReflectionUtils.newInstance(reader.getValueClass(), conf);
 
        // 把sequenceFile中的内容写到hbase中
-        int i = 0;
         while(reader.next(key, val)){
             String temp = key.toString();
             temp = temp.substring(temp.lastIndexOf("/") + 1);
@@ -91,18 +84,19 @@ public class SequenceFileTestWithThread {
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
-            put.addColumn("doc_content".getBytes(), "content".getBytes() , val.getBytes());
+            put.addColumn("pic_content".getBytes(), "doc".getBytes() , val.getBytes());
+//            put.addColumn("ws_xx".getBytes(), "doc".getBytes() , val.getBytes());
             table.put(put);
         }
         table.close();
         org.apache.hadoop.io.IOUtils.closeStream(reader);
-        try {
-            FileSystem fs = FileSystem.get(new URI("hdfs://bd-01:8020"), conf);
-            fs.delete(new Path("/tmp/xyh/doc_out"));
-            fs.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            FileSystem fs = FileSystem.get(new URI("hdfs://bd-01:8020"), conf);
+//            fs.delete(new Path("/tmp/xyh/doc_out"));
+//            fs.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     //递归文件, 将文件写成 sequenceFile
@@ -111,7 +105,7 @@ public class SequenceFileTestWithThread {
         for (FileStatus fileStatus : listStatuses) {
             if(fileStatus.isFile()){
                 Text fileText = new Text(fileStatus.getPath().toString());
-                System.out.println(fileText.toString());
+//                System.out.println(fileText.toString());
                 //返回一个SequenceFile.Writer实例 需要数据流和path对象 将数据写入了path对象
                 FSDataInputStream in = fileSystem.open(new Path(fileText.toString()));
                 byte[] buffer = IOUtils.toByteArray(in);
@@ -130,14 +124,15 @@ public class SequenceFileTestWithThread {
 
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        SequenceFileTestWithThread sequenceFileTest = new SequenceFileTestWithThread("/tmp/xyh/doc", "/tmp/xyh/doc_out/");
-        sequenceFileTest.initHbase("ns_xyh:t_doc");
-        ExecutorService service = Executors.newFixedThreadPool(6);
+        SequenceFileTestWithThread sequenceFileTest = new SequenceFileTestWithThread("/tmp/xyh/pic", "/tmp/xyh/pic_out5/");
+        sequenceFileTest.initHbase("ns_xyh:t_pic");
+        ExecutorService service = Executors.newFixedThreadPool(5);
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     sequenceFileTest.test();
+//                    sleep(10000);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -145,10 +140,13 @@ public class SequenceFileTestWithThread {
         });
 
     //连续存储两个小时
-    while(System.currentTimeMillis()<startTime+7200000) {
-        service.execute(thread);
-        sleep(10000);
-    }
+//    while(System.currentTimeMillis()<startTime+7200000) {
+        for (int i = 0; i < 9999; i++) {
+            service.execute(thread);
+        }
+
+//        sleep(50000);
+//    }
     long endTime = System.currentTimeMillis();
     System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
     service.shutdown();

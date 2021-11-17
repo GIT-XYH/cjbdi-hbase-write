@@ -26,31 +26,31 @@ public class LoadData {
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
         Configuration configuration = HBaseConfiguration.create();
-        configuration.set("hbase.zookeeper.quorum", "bd-01,bd-02,bd-03");
+        configuration.set("hbase.zookeeper.quorum", "bd-01");
         configuration.set("hbase.zookeeper.property.clientPort", "2181");
         configuration.set("zookeeper.znode.parent", "/hbase-unsecure");
 
+        //获取数据库连接
+        Connection connection = ConnectionFactory.createConnection(configuration);
+        //获取表的管理器对象
+        Admin admin = connection.getAdmin();
+        //获取table对象
+        TableName tableName = TableName.valueOf("ns_xyh:t_doc");
+        Table table = connection.getTable(tableName);
         // 创建线程池
-        ExecutorService service = Executors.newFixedThreadPool(10);
+        ExecutorService service = Executors.newFixedThreadPool(5);
         Runnable runnable = new Runnable(){
             @Override
             public void run() {
                 try {
-                    //获取数据库连接
-                    Connection connection = ConnectionFactory.createConnection(configuration);
-                    //获取表的管理器对象
-                    Admin admin = connection.getAdmin();
-                    //获取table对象
-                    TableName tableName = TableName.valueOf("ns_xyh:t_doc");
-                    Table table = connection.getTable(tableName);
 
                     HBaseBulkLoad.bulkLoad(args);
                     //构建LoadIncrementalHFiles加载HFile文件
                     LoadIncrementalHFiles load = new LoadIncrementalHFiles(configuration);
-                    load.doBulkLoad(new Path("hdfs://bd-01:8020/tmp/xyh/doc_out"), admin, table, connection.getRegionLocator(tableName));
+                    load.doBulkLoad(new Path("hdfs://bd-01:8020/tmp/xyh/doc_out4"), admin, table, connection.getRegionLocator(tableName));
                     try {
                         FileSystem fs = FileSystem.get(new URI("hdfs://bd-01:8020"), configuration);
-                        fs.delete(new Path("/tmp/xyh/doc_out"));
+                        fs.delete(new Path("/tmp/xyh/doc_out4"));
                         fs.close();
                     } catch (IOException e) {
                         e.printStackTrace();

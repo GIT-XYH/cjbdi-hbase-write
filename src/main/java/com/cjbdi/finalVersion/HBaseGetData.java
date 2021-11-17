@@ -41,7 +41,7 @@ public class HBaseGetData {
         //保存 get result 的结果, 字节数组的形式
         byte[] bs = rs.value();
         table.close();
-        File file = new File("/data/xyh/xxx.doc");
+        File file = new File("/data/xyh/xxx.pic");
         FileOutputStream fos = new FileOutputStream(file);
         fos.write(bs);
         fos.close();
@@ -83,7 +83,7 @@ public class HBaseGetData {
     }
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        HBaseGetData.getResult(TableName.valueOf("ns_xyh:t_doc"), "1637056927698");
+        HBaseGetData.getResult(TableName.valueOf("ns_xyh:t_pic"), "1637120032085");
     //    HBaseGetData.scanTable(TableName.valueOf("ns_xyh:t_doc"));
         long endTime = System.currentTimeMillis();
         System.out.println("HBase get 数据共耗时: " + (endTime-startTime));

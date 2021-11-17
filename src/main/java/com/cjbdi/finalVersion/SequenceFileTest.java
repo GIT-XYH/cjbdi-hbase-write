@@ -86,7 +86,7 @@ public class SequenceFileTest {
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
-            put.addColumn("doc_content".getBytes(), "doc".getBytes() , val.getBytes());
+            put.addColumn("pic_content".getBytes(), "pic".getBytes() , val.getBytes());
             table.put(put);
         }
         table.close();
@@ -124,8 +124,8 @@ public class SequenceFileTest {
 
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        SequenceFileTest sequenceFileTest = new SequenceFileTest("/tmp/xyh/doc", "/tmp/xyh/doc_out" + new Date().getTime());
-        sequenceFileTest.initHbase("ns_xyh:t_doc");
+        SequenceFileTest sequenceFileTest = new SequenceFileTest("/tmp/xyh/pic", "/tmp/xyh/pic_out3" + new Date().getTime());
+        sequenceFileTest.initHbase("ns_xyh:t_pic");
         while(System.currentTimeMillis()<startTime+7200000) {
             sequenceFileTest.test();
         }

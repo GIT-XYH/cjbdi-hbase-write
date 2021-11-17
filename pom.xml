@@ -79,7 +79,7 @@
                     <archive>
                         <manifest>
 <!--                            <mainClass>ali.yunjiexi.JieXi</mainClass>-->
-                            <mainClass>com.cjbdi.version5.SequenceFileTestWithThread</mainClass>
+                            <mainClass>com.cjbdi.finalVersion.SequenceFileTestWithThread</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
