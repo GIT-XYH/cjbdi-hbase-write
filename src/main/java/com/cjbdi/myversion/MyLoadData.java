@@ -47,10 +47,10 @@ public class MyLoadData {
                     MyHBaseBulkLoad.bulkLoad(args);
                     //构建LoadIncrementalHFiles加载HFile文件
                     LoadIncrementalHFiles load = new LoadIncrementalHFiles(configuration);
-                    load.doBulkLoad(new Path("hdfs://rookiex01:8020/xyh/pic_outhfile"), admin, table, connection.getRegionLocator(tableName));
+                    load.doBulkLoad(new Path("hdfs://rookiex01:8020/xyh/picHfile"), admin, table, connection.getRegionLocator(tableName));
                     try {
                         FileSystem fs = FileSystem.get(new URI("hdfs://rookiex01:8020"), configuration);
-                        fs.delete(new Path("/xyh/pic_outhfile"));
+                        fs.delete(new Path("/xyh/picHfile"));
                         fs.close();
                     } catch (IOException e) {
                         e.printStackTrace();

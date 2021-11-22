@@ -56,7 +56,7 @@ public class SequenceFileTest {
         Configuration conf = new Configuration();
         FileSystem fileSystem = FileSystem.get(uri, conf,"hdfs");
         //实例化writer对象
-        writer = SequenceFile.createWriter(fileSystem, conf, new Path(outpath), Text.class, BytesWritable.class);
+        writer = SequenceFile.createWriter(fileSystem, conf, new Path(outpath), Text.class, Text.class);
 
         //递归遍历文件夹，并将文件下的文件写入sequenceFile文件
         listFileAndWriteToSequenceFile(fileSystem,inpath);
@@ -71,7 +71,7 @@ public class SequenceFileTest {
 
         // Sequence File的键值对
         Text key = new Text();
-        BytesWritable val = new BytesWritable();
+        Text val = new Text();
         //key = (Text) ReflectionUtils.newInstance(reader.getKeyClass(), conf);
         //val = (BytesWritable) ReflectionUtils.newInstance(reader.getValueClass(), conf);
 
@@ -111,7 +111,7 @@ public class SequenceFileTest {
                 FSDataInputStream in = fileSystem.open(new Path(fileText.toString()));
                 byte[] buffer = IOUtils.toByteArray(in);
                 in.read(buffer);
-                BytesWritable value = new BytesWritable(buffer);
+                Text value = new Text(buffer);
                 //写成SequenceFile文件
                 //文件名, 二进制内容
                 writer.append(fileText, value);
@@ -124,11 +124,11 @@ public class SequenceFileTest {
 
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        SequenceFileTest sequenceFileTest = new SequenceFileTest("/tmp/xyh/pic", "/tmp/xyh/pic_out3" + new Date().getTime());
+        SequenceFileTest sequenceFileTest = new SequenceFileTest("/tmp/xyh/pic", "/tmp/xyh/seqFile2");
         sequenceFileTest.initHbase("ns_xyh:t_pic");
-        while(System.currentTimeMillis()<startTime+7200000) {
+//        while(System.currentTimeMillis()<startTime+60000) {
             sequenceFileTest.test();
-        }
+//        }
         long endTime = System.currentTimeMillis();
         System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
     }

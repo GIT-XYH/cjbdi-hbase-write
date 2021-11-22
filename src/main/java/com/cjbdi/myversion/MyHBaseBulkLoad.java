@@ -12,8 +12,11 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat2;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -42,10 +45,11 @@ public class MyHBaseBulkLoad extends Configured implements Tool {
         job.setJarByClass(MyHBaseBulkLoad.class);
 
 //        FileInputFormat.addInputPath(job, new Path("hdfs://rookiex01:8020/xyh/pic/pic1.jpeg"));
-        FileInputFormat.addInputPath(job, new Path("hdfs://rookiex01:8020/xyh/pic_out"));
-        job.setMapperClass(MyBulkLoadMapper.class);
-        job.setMapOutputKeyClass(ImmutableBytesWritable.class);
+        SequenceFileInputFormat.addInputPath(job, new Path("hdfs://rookiex01:8020/xyh/picSeq"));
+        job.setMapOutputKeyClass(BytesWritable.class);
         job.setMapOutputValueClass(Put.class);
+        job.setMapperClass(MyBulkLoadMapper.class);
+
 
         //获取数据库连接
         Connection connection = ConnectionFactory.createConnection(conf);
@@ -57,7 +61,7 @@ public class MyHBaseBulkLoad extends Configured implements Tool {
         job.setOutputFormatClass(HFileOutputFormat2.class);
         String time = new Date().getTime() + "";
 //        Path path = new Path("hdfs://rookiex01:8020/xyh/pic_out");
-        Path path = new Path("hdfs://rookiex01:8020/xyh/pic_outhfile");
+        Path path = new Path("hdfs://rookiex01:8020/xyh/picHfile");
         HFileOutputFormat2.setOutputPath(job, path);
 
         //开始执行

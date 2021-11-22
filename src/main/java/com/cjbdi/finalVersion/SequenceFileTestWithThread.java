@@ -57,9 +57,10 @@ public class SequenceFileTestWithThread {
         table = (Table) conn.getTable(TableName.valueOf(tableName));
     }
 
+    //遍历文件夹, 读取文件, 并将 sequenceFile 入库
     public void test() throws Exception {
         URI uri = new URI(inpath);
-        FileSystem fileSystem = FileSystem.get(uri, conf,"root");
+        FileSystem fileSystem = FileSystem.get(uri, conf,"hdfs");
         //实例化writer对象
         writer = SequenceFile.createWriter(fileSystem, conf, new Path(outpath), Text.class, BytesWritable.class);
         //递归遍历文件夹，并将文件下的文件写入sequenceFile文件
@@ -84,12 +85,13 @@ public class SequenceFileTestWithThread {
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
-            put.addColumn("pic_content".getBytes(), "doc".getBytes() , val.getBytes());
+            put.addColumn("pic_content".getBytes(), "pic".getBytes() , val.getBytes());
 //            put.addColumn("ws_xx".getBytes(), "doc".getBytes() , val.getBytes());
             table.put(put);
         }
         table.close();
         org.apache.hadoop.io.IOUtils.closeStream(reader);
+        System.out.println(Thread.currentThread().getName());
 //        try {
 //            FileSystem fs = FileSystem.get(new URI("hdfs://bd-01:8020"), conf);
 //            fs.delete(new Path("/tmp/xyh/doc_out"));
@@ -124,31 +126,25 @@ public class SequenceFileTestWithThread {
 
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        SequenceFileTestWithThread sequenceFileTest = new SequenceFileTestWithThread("/tmp/xyh/pic", "/tmp/xyh/pic_out5/");
+        SequenceFileTestWithThread sequenceFileTest = new SequenceFileTestWithThread("/tmp/xyh/testoaper", "/tmp/xyh/pic_out2");
         sequenceFileTest.initHbase("ns_xyh:t_pic");
         ExecutorService service = Executors.newFixedThreadPool(5);
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    sequenceFileTest.test();
-//                    sleep(10000);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                    try {
+                        //生成 sequenceFile 并没将 sequenceFile 写入 hbase
+                        sequenceFileTest.test();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
             }
         });
-
-    //连续存储两个小时
-//    while(System.currentTimeMillis()<startTime+7200000) {
-        for (int i = 0; i < 9999; i++) {
-            service.execute(thread);
-        }
-
-//        sleep(50000);
-//    }
-    long endTime = System.currentTimeMillis();
-    System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
-    service.shutdown();
+        service.submit(thread);
+        service.submit(thread);
+        service.submit(thread);
+//        service.shutdown();
+        long endTime = System.currentTimeMillis();
+        System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
     }
 }
