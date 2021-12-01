@@ -57,6 +57,29 @@ public class SequenceFileTestWithThread {
         table = (Table) conn.getTable(TableName.valueOf(tableName));
     }
 
+    //遍历文件夹并将文件夹写入 sequenceFile
+    public void listFileAndWriteToSequenceFile(FileSystem fileSystem, String path) throws Exception{
+        final FileStatus[] listStatuses = fileSystem.listStatus(new Path(path));
+        for (FileStatus fileStatus : listStatuses) {
+            if(fileStatus.isFile()){
+                Text fileText = new Text(fileStatus.getPath().toString());
+//                System.out.println(fileText.toString());
+                //返回一个SequenceFile.Writer实例 需要数据流和path对象 将数据写入了path对象
+                FSDataInputStream in = fileSystem.open(new Path(fileText.toString()));
+                byte[] buffer = IOUtils.toByteArray(in);
+                in.read(buffer);
+                BytesWritable value = new BytesWritable(buffer);
+
+                //写成SequenceFile文件
+                //文件名, 二进制内容
+                writer.append(fileText, value);
+            }
+            if(fileStatus.isDirectory()){
+                listFileAndWriteToSequenceFile(fileSystem, fileStatus.getPath().toString());
+            }
+        }
+    }
+
     //遍历文件夹, 读取文件, 并将 sequenceFile 入库
     public void test() throws Exception {
         URI uri = new URI(inpath);
@@ -85,7 +108,7 @@ public class SequenceFileTestWithThread {
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
-            put.addColumn("pic_content".getBytes(), "pic".getBytes() , val.getBytes());
+            put.addColumn("doc".getBytes(), "binary".getBytes() , val.getBytes());
 //            put.addColumn("ws_xx".getBytes(), "doc".getBytes() , val.getBytes());
             table.put(put);
         }
@@ -101,39 +124,16 @@ public class SequenceFileTestWithThread {
 //        }
     }
 
-    //递归文件, 将文件写成 sequenceFile
-    public void listFileAndWriteToSequenceFile(FileSystem fileSystem, String path) throws Exception{
-        final FileStatus[] listStatuses = fileSystem.listStatus(new Path(path));
-        for (FileStatus fileStatus : listStatuses) {
-            if(fileStatus.isFile()){
-                Text fileText = new Text(fileStatus.getPath().toString());
-//                System.out.println(fileText.toString());
-                //返回一个SequenceFile.Writer实例 需要数据流和path对象 将数据写入了path对象
-                FSDataInputStream in = fileSystem.open(new Path(fileText.toString()));
-                byte[] buffer = IOUtils.toByteArray(in);
-                in.read(buffer);
-                BytesWritable value = new BytesWritable(buffer);
-
-                //写成SequenceFile文件
-                //文件名, 二进制内容
-                writer.append(fileText, value);
-            }
-            if(fileStatus.isDirectory()){
-                listFileAndWriteToSequenceFile(fileSystem, fileStatus.getPath().toString());
-            }
-        }
-    }
-
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        SequenceFileTestWithThread sequenceFileTest = new SequenceFileTestWithThread("/tmp/xyh/testoaper", "/tmp/xyh/pic_out2");
-        sequenceFileTest.initHbase("ns_xyh:t_pic");
-        ExecutorService service = Executors.newFixedThreadPool(5);
+        SequenceFileTestWithThread sequenceFileTest = new SequenceFileTestWithThread("/tmp/xyh/doc_all", "/tmp/xyh/seqFile2");
+        sequenceFileTest.initHbase("t_xyh");
+        ExecutorService service = Executors.newFixedThreadPool(8);
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                     try {
-                        //生成 sequenceFile 并没将 sequenceFile 写入 hbase
+                        //生成 sequenceFile 并将 sequenceFile 写入 hbase
                         sequenceFileTest.test();
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -143,8 +143,10 @@ public class SequenceFileTestWithThread {
         service.submit(thread);
         service.submit(thread);
         service.submit(thread);
-//        service.shutdown();
-        long endTime = System.currentTimeMillis();
-        System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
+        service.submit(thread);
+        service.submit(thread);
+        service.shutdown();
+//        long endTime = System.currentTimeMillis();
+//        System.out.println("操作共耗时: " + (endTime-startTime) + "毫秒");
     }
 }

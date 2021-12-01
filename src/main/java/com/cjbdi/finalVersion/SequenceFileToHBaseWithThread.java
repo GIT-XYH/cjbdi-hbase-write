@@ -34,7 +34,7 @@ public class SequenceFileToHBaseWithThread {
         hbaseConf.set("zookeeper.znode.parent", "/hbase-unsecure");
         hbaseConf.set("hbase.client.keyvalue.maxsize", "102400000");
         Connection conn = ConnectionFactory.createConnection(hbaseConf);
-        Table table = (Table) conn.getTable(TableName.valueOf("ns_xyh:t_doc"));
+        Table table = (Table) conn.getTable(TableName.valueOf("t_xyh"));
         Configuration conf = new Configuration();
         URI seqURI = new URI("/tmp/xyh/docSequenceFile");
         FileSystem fileSystemSeq = FileSystem.get(seqURI, conf);
@@ -65,7 +65,7 @@ public class SequenceFileToHBaseWithThread {
                         //指定ROWKEY的值
                         Put put = new Put(Bytes.toBytes(rowKey));
                         //指定列簇名称、列修饰符、列值 temp.getBytes()
-                        put.addColumn("doc_content".getBytes(), "doc".getBytes(), val.getBytes());
+                        put.addColumn("doc".getBytes(), "doc".getBytes(), val.getBytes());
                         try {
                             table.put(put);
                         } catch (IOException e) {

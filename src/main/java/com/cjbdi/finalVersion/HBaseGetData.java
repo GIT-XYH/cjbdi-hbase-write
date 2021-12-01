@@ -83,7 +83,7 @@ public class HBaseGetData {
     }
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        HBaseGetData.getResult(TableName.valueOf("ns_xyh:t_doc"), "1637567508391");
+        HBaseGetData.getResult(TableName.valueOf("t_xyh"), "1637658169092");
     //    HBaseGetData.scanTable(TableName.valueOf("ns_xyh:t_doc"));
         long endTime = System.currentTimeMillis();
         System.out.println("HBase get 数据共耗时: " + (endTime-startTime));

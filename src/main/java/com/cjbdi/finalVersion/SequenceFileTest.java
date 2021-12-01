@@ -51,12 +51,34 @@ public class SequenceFileTest {
         table = (Table) conn.getTable(TableName.valueOf(tableName));
     }
 
+    //递归文件, 将文件写成 sequenceFile
+    public void listFileAndWriteToSequenceFile(FileSystem fileSystem, String path) throws Exception{
+        final FileStatus[] listStatuses = fileSystem.listStatus(new Path(path));
+        for (FileStatus fileStatus : listStatuses) {
+            if(fileStatus.isFile()){
+                Text fileText = new Text(fileStatus.getPath().toString());
+                System.out.println(fileText.toString());
+                //返回一个SequenceFile.Writer实例 需要数据流和path对象 将数据写入了path对象
+                FSDataInputStream in = fileSystem.open(new Path(fileText.toString()));
+                byte[] buffer = IOUtils.toByteArray(in);
+                in.read(buffer);
+                BytesWritable value = new BytesWritable(buffer);
+                //写成SequenceFile文件
+                //文件名, 二进制内容
+                writer.append(fileText, value);
+            }
+            if(fileStatus.isDirectory()){
+                listFileAndWriteToSequenceFile(fileSystem, fileStatus.getPath().toString());
+            }
+        }
+    }
+
     public void test() throws Exception {
         URI uri = new URI(inpath);
         Configuration conf = new Configuration();
         FileSystem fileSystem = FileSystem.get(uri, conf,"hdfs");
         //实例化writer对象
-        writer = SequenceFile.createWriter(fileSystem, conf, new Path(outpath), Text.class, Text.class);
+        writer = SequenceFile.createWriter(fileSystem, conf, new Path(outpath), Text.class, BytesWritable.class);
 
         //递归遍历文件夹，并将文件下的文件写入sequenceFile文件
         listFileAndWriteToSequenceFile(fileSystem,inpath);
@@ -71,12 +93,11 @@ public class SequenceFileTest {
 
         // Sequence File的键值对
         Text key = new Text();
-        Text val = new Text();
+        BytesWritable val = new BytesWritable();
         //key = (Text) ReflectionUtils.newInstance(reader.getKeyClass(), conf);
         //val = (BytesWritable) ReflectionUtils.newInstance(reader.getValueClass(), conf);
 
        // 把sequenceFile中的内容写到hbase中
-        int i = 0;
         while(reader.next(key, val)){
             String temp = key.toString();
             temp = temp.substring(temp.lastIndexOf("/") + 1);
@@ -86,7 +107,7 @@ public class SequenceFileTest {
             //指定ROWKEY的值
             Put put = new Put(Bytes.toBytes(rowKey));
             //指定列簇名称、列修饰符、列值 temp.getBytes()
-            put.addColumn("pic_content".getBytes(), "pic".getBytes() , val.getBytes());
+            put.addColumn("doc".getBytes(), "binary".getBytes() , val.getBytes());
             table.put(put);
         }
         table.close();
@@ -100,32 +121,10 @@ public class SequenceFileTest {
 //        }
     }
 
-    //递归文件, 将文件写成 sequenceFile
-    public void listFileAndWriteToSequenceFile(FileSystem fileSystem, String path) throws Exception{
-        final FileStatus[] listStatuses = fileSystem.listStatus(new Path(path));
-        for (FileStatus fileStatus : listStatuses) {
-            if(fileStatus.isFile()){
-                Text fileText = new Text(fileStatus.getPath().toString());
-//                System.out.println(fileText.toString());
-                //返回一个SequenceFile.Writer实例 需要数据流和path对象 将数据写入了path对象
-                FSDataInputStream in = fileSystem.open(new Path(fileText.toString()));
-                byte[] buffer = IOUtils.toByteArray(in);
-                in.read(buffer);
-                Text value = new Text(buffer);
-                //写成SequenceFile文件
-                //文件名, 二进制内容
-                writer.append(fileText, value);
-            }
-            if(fileStatus.isDirectory()){
-                listFileAndWriteToSequenceFile(fileSystem, fileStatus.getPath().toString());
-            }
-        }
-    }
-
     public static void main(String[] args) throws Exception {
         long startTime = System.currentTimeMillis();
-        SequenceFileTest sequenceFileTest = new SequenceFileTest("/tmp/xyh/pic", "/tmp/xyh/seqFile2");
-        sequenceFileTest.initHbase("ns_xyh:t_pic");
+        SequenceFileTest sequenceFileTest = new SequenceFileTest("/tmp/xyh/doc_all", "/tmp/xyh/seqFile");
+        sequenceFileTest.initHbase("t_xyh");
 //        while(System.currentTimeMillis()<startTime+60000) {
             sequenceFileTest.test();
 //        }

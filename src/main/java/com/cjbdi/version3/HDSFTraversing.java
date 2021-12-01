@@ -19,14 +19,14 @@ public class HDSFTraversing {
         FileStatus[] fss = fs.listStatus(new Path("/tmp/xyh/doc"));
         ArrayList<String> strings = new ArrayList<>();
         for (FileStatus fileStatus : fss) {
-            //fileStatus 路径下所有的文件或者文件夹
-//            if (fileStatus.isDirectory()) {
-//                Path path = fileStatus.getPath();
-//                System.out.println(path);
-//            } else {
+//            fileStatus 路径下所有的文件或者文件夹
+            if (fileStatus.isDirectory()) {
+                Path path = fileStatus.getPath();
+                System.out.println(path);
+            } else {
 //                获取文件路径
-//                System.out.println(fileStatus.getPath());
-//            }
+                System.out.println(fileStatus.getPath());
+            }
             strings.add(fileStatus.getPath().toString());
         }
         return strings;
